@@ -1,4 +1,5 @@
 ﻿using System;
+using MessagePack;
 
 namespace SourceGeneratorTest
 {
@@ -10,7 +11,10 @@ namespace SourceGeneratorTest
         }
     }
 
+    [MessagePackObject(true)]
     public partial struct Foo
     {
+        public int MyProperty2 { get; set; }
+
     }
 }

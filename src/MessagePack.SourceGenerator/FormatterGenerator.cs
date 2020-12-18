@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MessagePackCompiler.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -32,15 +33,17 @@ namespace MessagePack.SourceGenerator
                 return;
             }
 
+            // create typecollector without collect from compilation.
+            var typeCollector = new TypeCollector(context.Compilation, true, false, null, x => System.Diagnostics.Trace.WriteLine(x), true);
+
             foreach (var (type, attr) in receiver.Targets)
             {
                 var model = context.Compilation.GetSemanticModel(type.SyntaxTree);
 
-                var symbol = model.GetSymbolInfo(type);
-                var namedTypeSymbol = symbol.Symbol as INamedTypeSymbol;
+                var symbol = model.GetDeclaredSymbol(type) as INamedTypeSymbol;
 
-                // TODO: run TypeCollector
-                
+                var (objectInfo, enumInfo, genericInfo, unionInfo) = typeCollector.CollectNewTargetTypes(new[] { symbol });
+
 
             }
         }

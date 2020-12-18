@@ -91,7 +91,7 @@ namespace MessagePackCompiler.CodeAnalysis
 
         private readonly bool isForceUseMap;
         private readonly ReferenceSymbols typeReferences;
-        private readonly INamedTypeSymbol[] targetTypes;
+        private INamedTypeSymbol[]? targetTypes; // resettable.
         private readonly HashSet<string> embeddedTypes = new(new[]
         {
             "short",
@@ -250,34 +250,37 @@ namespace MessagePackCompiler.CodeAnalysis
         private readonly List<GenericSerializationInfo> collectedGenericInfo = new();
         private readonly List<UnionSerializationInfo> collectedUnionInfo = new();
 
-        public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, string[]? ignoreTypeNames, Action<string> logger)
+        public TypeCollector(Compilation compilation, bool disallowInternal, bool isForceUseMap, string[]? ignoreTypeNames, Action<string> logger, bool withoutCollect = false)
         {
             this.typeReferences = new ReferenceSymbols(compilation, logger);
             this.disallowInternal = disallowInternal;
             this.isForceUseMap = isForceUseMap;
             this.externalIgnoreTypeNames = new HashSet<string>(ignoreTypeNames ?? Array.Empty<string>());
 
-            targetTypes = compilation.GetNamedTypeSymbols()
-                .Where(x =>
-                {
-                    if (x.DeclaredAccessibility == Accessibility.Public)
+            if (!withoutCollect)
+            {
+                targetTypes = compilation.GetNamedTypeSymbols()
+                    .Where(x =>
                     {
-                        return true;
-                    }
+                        if (x.DeclaredAccessibility == Accessibility.Public)
+                        {
+                            return true;
+                        }
 
-                    if (!disallowInternal)
-                    {
-                        return x.DeclaredAccessibility == Accessibility.Friend;
-                    }
+                        if (!disallowInternal)
+                        {
+                            return x.DeclaredAccessibility == Accessibility.Friend;
+                        }
 
-                    return false;
-                })
-                .Where(x =>
-                       ((x.TypeKind == TypeKind.Interface) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
-                    || ((x.TypeKind == TypeKind.Class && x.IsAbstract) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
-                    || ((x.TypeKind == TypeKind.Class) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute)))
-                    || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute))))
-                .ToArray();
+                        return false;
+                    })
+                    .Where(x =>
+                           ((x.TypeKind == TypeKind.Interface) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
+                        || ((x.TypeKind == TypeKind.Class && x.IsAbstract) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.UnionAttribute)))
+                        || ((x.TypeKind == TypeKind.Class) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute)))
+                        || ((x.TypeKind == TypeKind.Struct) && x.GetAttributes().Any(x2 => x2.AttributeClass.ApproximatelyEqual(typeReferences.MessagePackObjectAttribute))))
+                    .ToArray();
+            }
         }
 
         private void ResetWorkspace()
@@ -293,6 +296,10 @@ namespace MessagePackCompiler.CodeAnalysis
         public (ObjectSerializationInfo[] ObjectInfo, EnumSerializationInfo[] EnumInfo, GenericSerializationInfo[] GenericInfo, UnionSerializationInfo[] UnionInfo) Collect()
         {
             this.ResetWorkspace();
+            if (targetTypes == null)
+            {
+                throw new InvalidOperationException("target type is not set.");
+            }
 
             foreach (INamedTypeSymbol item in this.targetTypes)
             {
@@ -304,6 +311,13 @@ namespace MessagePackCompiler.CodeAnalysis
                 this.collectedEnumInfo.OrderBy(x => x.FullName).ToArray(),
                 this.collectedGenericInfo.Distinct().OrderBy(x => x.FullName).ToArray(),
                 this.collectedUnionInfo.OrderBy(x => x.FullName).ToArray());
+        }
+
+        public (ObjectSerializationInfo[] ObjectInfo, EnumSerializationInfo[] EnumInfo, GenericSerializationInfo[] GenericInfo, UnionSerializationInfo[] UnionInfo)
+            CollectNewTargetTypes(INamedTypeSymbol[] targetTypes)
+        {
+            this.targetTypes = targetTypes;
+            return Collect();
         }
 
         // Gate of recursive collect
