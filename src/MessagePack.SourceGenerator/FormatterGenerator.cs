@@ -40,6 +40,8 @@ namespace MessagePack.SourceGenerator
                 var namedTypeSymbol = symbol.Symbol as INamedTypeSymbol;
 
                 // TODO: run TypeCollector
+                
+
             }
         }
 
