@@ -1,0 +1,19 @@
+{
+	"user": {
+	  "contactEmail": "dev@siderlabs.com"
+	},
+	"channels": {
+		"email": {
+			"useBuiltInProvider": true,
+			"defaults": {
+				"from": "Sider Scan Report <dev@siderlabs.com>"
+			}
+		}
+	},
+	"report": {
+		"enableDetailReport": true 
+	},
+	"exitCode": {
+		"nonZeroIfDetected": false
+	}
+}
