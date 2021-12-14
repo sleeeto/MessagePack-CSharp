@@ -54,5 +54,5 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: "ap-northeast-1"
           FROM_PATH: scan_result
-          DEST_PATH: "s3://siderscan-public-result/${GITHUB_REPOSITORY}/${{ github.run_number }}/scan_result"
+          DEST_PATH: "s3://siderscan-public-result/${{ github.repository }}/${{ github.run_number }}/scan_result"
           OPTIONS: "--acl public-read"
