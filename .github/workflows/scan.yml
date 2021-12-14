@@ -46,7 +46,7 @@ jobs:
         with:
           name: radump
           path: /tmp/output.radump
-      - name: Publish to S3 bucket
+      - name: Upload to S3 bucket
         uses: opspresso/action-s3-sync@master
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
