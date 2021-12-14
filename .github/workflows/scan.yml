@@ -40,8 +40,7 @@ jobs:
           -f /tmp/output.radump \
           -t hideto@siderlabs.com \
           -o ./scan_result/ \
-          -u https://siderscan-public-result.s3.ap-northeast-1.amazonaws.com/${GITHUB_REPOSITORY}/${GITHUB_RUN_NUMBER} \
-          -V
+          -u https://siderscan-public-result.s3.ap-northeast-1.amazonaws.com/${GITHUB_REPOSITORY}/${GITHUB_RUN_NUMBER}
       - name: Upload radump
         uses: actions/upload-artifact@v2
         with:
